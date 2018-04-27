@@ -12,6 +12,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,10 +25,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class InternationalDocUtils {
     /**
      * android中文string.xml文件拆分
+     *
      * @return map key = string.xml的key; map value = string.xml value
      */
-    public static Map<String,String> splitStringXml2Map(String filePath) {
-        Map<String, String> stringMap = new HashMap<String, String>();
+    public static ConcurrentHashMap<String, String> splitStringXml2Map(String filePath) {
+        ConcurrentHashMap<String, String> stringMap = new ConcurrentHashMap<String, String>();
         File f = new File(filePath);
         Element element = null;
         DocumentBuilder db = null;
@@ -63,8 +65,7 @@ public class InternationalDocUtils {
                     stringMap.put(key, value);
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return stringMap;
@@ -74,10 +75,11 @@ public class InternationalDocUtils {
     /**
      * 拆分iOS文档到map集合中
      * 文档内容以行的形式读取  “中文” = “英文”
+     *
      * @param filePath iOS文档路径
      * @return map key = iOS 文件的 key; map value = iOS 文件的 value
      */
-    public static Map<String,String> splitFileStrByLine2Map(String filePath) {
+    public static Map<String, String> splitFileStrByLine2Map(String filePath) {
         Map<String, String> iOSstringMap = new HashMap<String, String>();
         File file = new File(filePath);
         String result = null;
@@ -92,26 +94,49 @@ public class InternationalDocUtils {
 //				System.out.println("已经读到 line = " + line);
                 if (line.contains("=")) {
                     String[] split = line.split("=");
-                    split[0] = split[0].replace("\"", "");
-//					split[0] = split[0].replace(";", "");
-                    split[1] =split[1].replace("\"", "");
-                    split[1] =split[1].replace(";", "");
-                    split[1] =split[1].substring(2, split[1].length());
-//					System.out.println("打印中文:" + split[0]);
-//					System.out.println("打印英文:" + split[1]);
+                    if (split.length != 2) {
+                        System.out.println("ios文件中的异常line = " + line);
+                        line = br.readLine();
+                        continue;
+                    }
+                    split[0] = split[0].trim();
+                    split[1] = split[1].trim();
+                    if (!split[0].startsWith("\"")) {
+                        System.out.println("ios文件中的异常line 中文部分不是已 “ 开头 = " + line);
+                    }
+                    if (!split[1].startsWith("\"")) {
+                        System.out.println("ios文件中的异常line 英文部分不是已 “ 开头 = " + line);
+                    }
+                    split[0] = split[0].substring(1, split[0].lastIndexOf("\""));
+                    split[1] = split[1].substring(1, split[1].lastIndexOf("\""));
+
+                    //有问题
+//                    split[0] = split[0].substring(split[0].indexOf("\"") + 1, split[0].lastIndexOf("\""));
+//                    split[1] = split[1].substring(split[1].indexOf("\"") + 1, split[1].lastIndexOf("\""));
+
+                    //使用下面注释的提取方式有问题, 第一个双引号前面可能有长条空格
+//                    split[0] = split[0].replace("\"", "");
+//                    split[1] =split[1].replace("\"", "");
+//                    split[1] =split[1].substring(2, split[1].length());
+
+//                    System.out.println("split 0 = " + split[0]);
+//                    System.out.println("split 1 = " + split[1]);
                     //中文,英文以键值对的形式存入map集合中
                     iOSstringMap.put(split[0], split[1]);
-                    line = br.readLine();
                 } else {
-                    System.out.println("直接打印不包含的line = " + line);
-                    line = br.readLine();
+                    if (line != null && !"".equals(line) && line.length() != 0) {
+                        System.out.println("直接打印不包含=的line = " + line);
+                    }
                 }
+                line = br.readLine();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        }finally{
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
             try {
                 fr.close();
                 br.close();
@@ -120,5 +145,11 @@ public class InternationalDocUtils {
             }
         }
         return iOSstringMap;
+    }
+
+    //字符串去标点
+    public static String myFormatUtil(String s) {
+        String str = s.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘；：”“’。，、？|-]", "");
+        return str;
     }
 }
