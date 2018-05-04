@@ -1,8 +1,6 @@
 package com.international.repeat;
 
 import com.international.repeat.vo.StringXmlBean;
-import com.international.util.InternationalFileUtils;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -34,7 +32,7 @@ public class CheckAndroidRepeatString {
 
     public static void main(String[] args){
         CheckAndroidRepeatString checkAndroidRepeatString = new CheckAndroidRepeatString();
-        checkAndroidRepeatString.checkOnMultiFolder(multiPath, "strings.xml");
+        checkAndroidRepeatString.checkOnMultiFolder(multiPath);
 //        checkAndroidRepeatString.checkOnSingleFolder();
         checkAndroidRepeatString.printRepeatValue();
     }
@@ -62,7 +60,7 @@ public class CheckAndroidRepeatString {
      * 查找文件
      * 读取一个路径下多个文件夹的指定文件
      */
-    private void checkOnMultiFolder(String baseDirName, String targetFileName){
+    private void checkOnMultiFolder(String baseDirName){
         File baseDir = new File(baseDirName);       // 创建一个File对象
         if (!baseDir.exists() || !baseDir.isDirectory()) {  // 判断目录是否存在
             System.out.println("文件查找失败：" + baseDirName + "不是一个目录！");
@@ -74,17 +72,20 @@ public class CheckAndroidRepeatString {
         for (int i = 0; i < files.length; i++) {
             tempFile = files[i];
             if(tempFile.isDirectory()){
-                checkOnMultiFolder(tempFile.getAbsolutePath(), targetFileName);
+                checkOnMultiFolder(tempFile.getAbsolutePath());
             }else if(tempFile.isFile()){
                 //只扫描values文件夹
                 String parent = tempFile.getParent();
+                boolean isBuild = parent.contains("\\build\\");
+                if (isBuild) {
+                    continue;
+                }
                 boolean isValues = parent.endsWith("values");
+                boolean isEn = parent.endsWith("values-en");
+                boolean isTW = parent.endsWith("values-zh-rTW");
                 if (isValues) {
-                    tempName = tempFile.getName();
-                    if(InternationalFileUtils.wildcardMatch(targetFileName, tempName)){
-                        // 匹配成功，将文件名添加到结果集
-//                    fileList.add(tempFile.getAbsoluteFile());
-//                        System.out.println("fileName = " + tempFile.getName() + "\nAbsolutePath = " + tempFile.getAbsolutePath() + "\n");
+                    boolean stringFile = isStringFile(tempFile);
+                    if (stringFile){
                         List<StringXmlBean> beanList = splitStringXml2Map(tempFile);
                         if (beanList != null) {
                             allList.addAll(beanList);
@@ -109,7 +110,8 @@ public class CheckAndroidRepeatString {
                 String keyj = beanj.getKey();
                 String valuei = beani.getValue();
                 String valuej = beanj.getValue();
-                if (keyi.equals(keyj) && !valuei.equals(valuej)) {
+                if (keyi.equals(keyj) && valuei.equals(valuej)) {
+//                if (keyi.equals(keyj) && !valuei.equals(valuej)) {
                     if (set.add(beani)) {
                         repeatList.add(beani);
                     }
@@ -170,7 +172,13 @@ public class CheckAndroidRepeatString {
                     String value = node1.getTextContent();
 
                     StringXmlBean stringXmlBean = new StringXmlBean();
-                    stringXmlBean.setFileName(file.getPath());
+                    String fileUnuseName = "D:\\AndroidStudio\\AndroidProject\\Checkout4\\";
+                    String path = file.getPath();
+                    String subPath = "";
+                    if (path.contains(fileUnuseName)) {
+                        subPath = path.substring(fileUnuseName.length(), path.length());
+                    }
+                    stringXmlBean.setFileName(subPath);
                     stringXmlBean.setKey(key);
                     stringXmlBean.setValue(value);
                     list.add(stringXmlBean);
@@ -182,4 +190,31 @@ public class CheckAndroidRepeatString {
         return list;
     }
 
+    private boolean isStringFile(File file){
+        boolean isStringFile = false;
+        if (!file.exists()) {
+            return false;
+        }
+        List<StringXmlBean> list = new ArrayList<>();
+        Element element;
+        DocumentBuilder db;
+        DocumentBuilderFactory dbf;
+        try {
+            dbf = DocumentBuilderFactory.newInstance();
+            db = dbf.newDocumentBuilder();
+            Document dt = db.parse(file);
+            element = dt.getDocumentElement();
+            NodeList childNodes = element.getChildNodes();
+            for (int i = 0; i < childNodes.getLength(); i++) {
+                Node node1 = childNodes.item(i);
+                if ("string".equals(node1.getNodeName())) {
+                    isStringFile = true;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return isStringFile;
+    }
 }
