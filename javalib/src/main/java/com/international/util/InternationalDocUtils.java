@@ -147,9 +147,17 @@ public class InternationalDocUtils {
         return iOSstringMap;
     }
 
-    //字符串去标点
+    /**
+     * 字符串去标点
+     * 这里最好全部替换成通用字符, 不然语义有可能发生变化
+     * 通用字符 HAHA  标点
+     */
     public static String myFormatUtil(String s) {
-        String str = s.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘；：”“’。，、？|-]", "");
+        String str1 = s.replaceAll("(?:%s|%@|%d|%x|%o|%f|%a|%e|%g|%n|%%|%1$|%3$|%2$|%4$|%1d|%2d|%3d|%4d|%1$f|%2$f|%3$f|%4f)","HAHA");
+//        String str1 = s.replaceAll("%s","HAHA");
+
+
+        String str = str1.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘；：”“’。，、？|-]", "标点");
         return str;
     }
 }

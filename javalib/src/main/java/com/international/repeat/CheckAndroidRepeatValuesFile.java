@@ -27,7 +27,7 @@ public class CheckAndroidRepeatValuesFile {
 
     private static final String singlePath = "D:/translateTemp/replace2018.04.27";
 
-    private static final String multiPath = "D:/AndroidStudio/AndroidProject/CheckoutTemp"; //CheckoutTemp  Checkout4
+    private static final String multiPath = "D:/AndroidStudio/AndroidProject/Checkout3"; //CheckoutTemp  Checkout4
 
     /**
      * xml文件中标签key  标识此文件为何种values文件
@@ -121,7 +121,7 @@ public class CheckAndroidRepeatValuesFile {
                 String valuei = beani.getValue();
                 String valuej = beanj.getValue();
 //                if (keyi.equals(keyj) && valuei.equals(valuej)) {
-                if (keyi.equals(keyj) && !valuei.equals(valuej)) {
+                if (keyi.equals(keyj) && valuei.equals(valuej)) {
 //                if (keyi.equals(keyj)) {
                     if (set.add(beani)) {
                         repeatList.add(beani);
