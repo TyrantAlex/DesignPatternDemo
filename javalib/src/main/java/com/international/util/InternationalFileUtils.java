@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 国际化文件工具类
@@ -103,5 +105,28 @@ public class InternationalFileUtils {
             }
         }
         return (strIndex == strLength);
+    }
+
+    /**
+     * 按行读取
+     * @param path
+     * @return
+     * @throws IOException
+     */
+    public static List<String> readFileByLine(String path) throws IOException {
+        List<String> list = new ArrayList<String>();
+        FileInputStream fis = new FileInputStream(path);
+        InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
+        BufferedReader br = new BufferedReader(isr);
+        String line = "";
+        while ((line = br.readLine()) != null) {
+            if (line.lastIndexOf("---") < 0) {
+                list.add(line);
+            }
+        }
+        br.close();
+        isr.close();
+        fis.close();
+        return list;
     }
 }

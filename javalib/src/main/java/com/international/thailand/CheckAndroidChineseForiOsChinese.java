@@ -82,6 +82,7 @@ public class CheckAndroidChineseForiOsChinese {
      * 匹配不一致的中文字符
      */
     private void catchInconsistentChineseStr() {
+        System.out.println("android string文件字符串个数为: " + allList.size());
         /**
          * 最终输出的String list
          */
