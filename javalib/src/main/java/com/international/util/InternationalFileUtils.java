@@ -3,6 +3,7 @@ package com.international.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -128,5 +129,45 @@ public class InternationalFileUtils {
         isr.close();
         fis.close();
         return list;
+    }
+
+    /**
+     * 按行写入
+     * @param fileName
+     * @param clist
+     * @throws IOException
+     */
+    public static void fileWriter(String fileName,List<String> clist) throws IOException{
+        //创建一个FileWriter对象
+        FileWriter fw = new FileWriter(fileName);
+        //遍历clist集合写入到fileName中
+        for (String str: clist){
+            fw.write(str);
+            fw.write("\n");
+        }
+        //刷新缓冲区
+        fw.flush();
+        //关闭文件流对象
+        fw.close();
+    }
+
+    /**
+     * 按行写入
+     * @param file
+     * @param clist
+     * @throws IOException
+     */
+    public static void fileWriter(File file,List<String> clist) throws IOException{
+        //创建一个FileWriter对象
+        FileWriter fw = new FileWriter(file);
+        //遍历clist集合写入到fileName中
+        for (String str: clist){
+            fw.write(str);
+            fw.write("\n");
+        }
+        //刷新缓冲区
+        fw.flush();
+        //关闭文件流对象
+        fw.close();
     }
 }

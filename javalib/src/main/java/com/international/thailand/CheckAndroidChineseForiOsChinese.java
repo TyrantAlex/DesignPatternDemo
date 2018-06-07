@@ -2,6 +2,7 @@ package com.international.thailand;
 
 import com.international.repeat.vo.StringXmlBean;
 import com.international.util.InternationalDocUtils;
+import com.international.util.InternationalFileUtils;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -38,6 +39,16 @@ public class CheckAndroidChineseForiOsChinese {
      * 项目位置 65
      */
     public static final String FILE_PATH = "D:/AndroidStudio/AndroidProject/Checkout3";
+
+    /**
+     * 最终写入文件路径
+     */
+    public static final String AFTER_COMPARE_FILE_PATH = "D:/networkProje/DesignPatternDemo/javalib/src/main/java/com/international/thailand/CompareStringFile";
+
+    /**
+     * 需要过滤的关键字
+     */
+    public static final String KEY_WORD_FILE_PATH = "D:/networkProje/DesignPatternDemo/javalib/src/main/java/com/international/thailand/NeedBeDelete";
 
     /**
      * xml文件中标签key  标识此文件为何种values文件
@@ -79,6 +90,56 @@ public class CheckAndroidChineseForiOsChinese {
     }
 
     /**
+     * 写入文件
+     * @param resultList
+     * @throws IOException
+     */
+    private void writeToFile(List<String> resultList){
+        //去重
+        System.out.println("去重前 数组长度为: " + resultList.size());
+        //去重后数组
+        List<String> listClear = new ArrayList<>();
+        Set<String> set = new LinkedHashSet<>();
+        set.addAll(resultList);
+        for (String str : set) {
+            listClear.add(str);
+        }
+        System.out.println("去重后 数组长度为: " + listClear.size());
+        //过滤关键字
+        System.out.println("删除关键词前数组长度为: " + listClear.size());
+        List<String>  list = interceptionFilter(listClear);
+        System.out.println("删除关键词后数组长度为: " + list.size());
+        try {
+            InternationalFileUtils.fileWriter(AFTER_COMPARE_FILE_PATH, list);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<String> interceptionFilter(List<String> resultList){
+        List<String> afterDeleteList = new ArrayList<>();
+        try {
+            List<String> keywords = InternationalFileUtils.readFileByLine(KEY_WORD_FILE_PATH);
+            for (String fileStr : resultList) {
+                boolean isExit = false;
+                for (String keyword : keywords) {
+                    if (fileStr.contains(keyword)) {
+                        isExit = true;
+                    }
+                }
+                if (!isExit) {
+                    //每一句话加上标识
+                    afterDeleteList.add("<T>"+fileStr+"</T>");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return afterDeleteList;
+    }
+
+
+    /**
      * 匹配不一致的中文字符
      */
     private void catchInconsistentChineseStr() {
@@ -111,9 +172,10 @@ public class CheckAndroidChineseForiOsChinese {
 //                System.out.println(bean.getValue());
             }
         }
-        System.out.println("android string文件字符串个数为: " + allList.size());
         //最终去重并打印
-        printUnrepeatStr(resultStringList);
+//        printUnrepeatStr(resultStringList);
+        //写入文件
+        writeToFile(resultStringList);
     }
 
 
