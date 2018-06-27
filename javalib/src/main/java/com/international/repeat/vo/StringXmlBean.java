@@ -13,6 +13,16 @@ public class StringXmlBean{
 
     private String fileName;
 
+    private String formatted;
+
+    public String getFormatted() {
+        return formatted;
+    }
+
+    public void setFormatted(String formatted) {
+        this.formatted = formatted;
+    }
+
     public String getKey() {
         return key;
     }

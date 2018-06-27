@@ -69,6 +69,7 @@ public class CheckAnroidTranslateEnglish {
     private static final String DIRECT_FOLDER_VALUES = "values";
     private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
     private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
+    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
 
     public static void main(String[] args) {
         CheckAnroidTranslateEnglish check = new CheckAnroidTranslateEnglish();

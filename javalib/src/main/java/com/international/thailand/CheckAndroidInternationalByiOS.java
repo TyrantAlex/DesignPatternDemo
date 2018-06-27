@@ -2,6 +2,7 @@ package com.international.thailand;
 
 import com.international.repeat.vo.StringXmlBean;
 import com.international.repeat.vo.StringiOSBean;
+import com.international.thailand.vo.PlaceHolder;
 import com.international.util.InternationalDocUtils;
 
 import org.w3c.dom.Document;
@@ -15,6 +16,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -39,8 +41,10 @@ public class CheckAndroidInternationalByiOS {
 
     /**
      * iOS文件路径
+     * 0627iosen
+     * 0627iosth
      */
-    private static final String IOS_FILE_PATH = "D:\\translateTemp\\replace2018.06.19\\translate_after\\0620iosen";
+    private static final String IOS_FILE_PATH = "D:\\translateTemp\\replace2018.06.19\\translate_after\\0627iosth";
 
     /**
      * xml文件中标签key  标识此文件为何种values文件
@@ -52,8 +56,9 @@ public class CheckAndroidInternationalByiOS {
      * String文件类型目标文件夹
      */
     private static final String DIRECT_FOLDER_VALUES = "values";
-    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
-    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
+//    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
+//    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
+    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
 
     /**
      * 路径打印时候无用的路径部分 如需全路径则置空
@@ -80,15 +85,15 @@ public class CheckAndroidInternationalByiOS {
         allList.clear();
 
         //将android英文取出组成list
-        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_EN);
+        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_TH);
         List<StringXmlBean> allEN= new ArrayList<>();
         allEN.addAll(allList);
-        System.out.println("所有英文文字符数量: " + allList.size());
+        System.out.println("所有国际化字符数量: " + allList.size());
         allList.clear();
 
         //比较android中英文key 取出有中文无英文的组成list
         List<StringXmlBean> cnNoEn = compareAndroidCNAndEn(allCN, allEN);
-        System.out.println("所有有中文无英文 字符数量: " + cnNoEn.size());
+        System.out.println("所有有中文需翻译成外文 字符数量: " + cnNoEn.size());
 
         //将ios文件取出并组成list
         List<StringiOSBean> stringiOSBeans = splitFileStrByLine2List(IOS_FILE_PATH);
@@ -96,7 +101,7 @@ public class CheckAndroidInternationalByiOS {
 
         //比较android剩下的list和ios list比较 生成新的英文list
         List<StringXmlBean> beanList = compareAndroidAndiOS(cnNoEn, stringiOSBeans);
-        System.out.println("需要补充的英文字符数量 : " + beanList.size());
+        System.out.println("需要补充的外文字符数量 : " + beanList.size());
 
 
         //去重
@@ -123,6 +128,7 @@ public class CheckAndroidInternationalByiOS {
             String value = bean.getValue();
             String key = bean.getKey();
             String filePath = bean.getFileName();
+            String formatted = bean.getFormatted();
             //中文string文件file
             File file = new File(filePath);
             String fileName = file.getName();
@@ -130,13 +136,13 @@ public class CheckAndroidInternationalByiOS {
             File parent = file.getParentFile();
             //values父一级 string文件祖父一级
             String grandparent = parent.getParent();
-            //替换为英文目录
-            String englishDir = grandparent + File.separator + DIRECT_FOLDER_VALUES_EN;
+            //替换为国际化目录
+            String englishDir = grandparent + File.separator + DIRECT_FOLDER_VALUES_TH;
 
             File file1 = new File(englishDir);
             if (!file1.exists()) {
                 file1.mkdirs();
-                createForiegnFile(englishDir, fileName, key, value);
+                createForiegnFile(englishDir, fileName, key, value, formatted);
             } else {
                 //列出当前目录的所有文件
                 File[] files = file1.listFiles();
@@ -146,7 +152,7 @@ public class CheckAndroidInternationalByiOS {
                     //判断是否为string文件
                     if (nodeKeyFile) {
                         //dom解析读取文件并执行添加
-                        addStringByDom(files[0], key, value);
+                        addStringByDom(files[0], key, value, formatted);
                     }else{
                         System.out.println("当前英文目录存放的不是string文件: " + files.length + " ," + files[0].getPath());
                     }
@@ -155,7 +161,7 @@ public class CheckAndroidInternationalByiOS {
                         System.out.println("当前英文目录不止一个文件: " + files.length + " ," + file1.getPath());
                     }
                 } else {
-                    createForiegnFile(englishDir, fileName, key, value);
+                    createForiegnFile(englishDir, fileName, key, value, formatted);
                 }
             }
         }
@@ -168,7 +174,7 @@ public class CheckAndroidInternationalByiOS {
      * @param key
      * @param value
      */
-    private void createForiegnFile(String englishDir, String fileName, String key, String value) {
+    private void createForiegnFile(String englishDir, String fileName, String key, String value, String formatted) {
         //建立英文目录文件
         String enStringFilePath = englishDir + File.separator + fileName;
         File fileEn = new File(enStringFilePath);
@@ -180,7 +186,7 @@ public class CheckAndroidInternationalByiOS {
         try {
             boolean newFile = fileEn.createNewFile();
             if (newFile) {
-                createStringByDom(fileEn,key,value);
+                createStringByDom(fileEn,key,value, formatted);
                 System.out.println("创建英文目录文件成功: " + englishDir);
             } else {
                 System.out.println("创建英文目录文件失败: " + englishDir);
@@ -208,7 +214,7 @@ public class CheckAndroidInternationalByiOS {
      * @param key
      * @param value
      */
-    private void createStringByDom(File file, String key, String value) {
+    private void createStringByDom(File file, String key, String value, String formatted) {
         try {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -223,6 +229,9 @@ public class CheckAndroidInternationalByiOS {
             //获取String元素
             Element elementNew = document.createElement("string");
             elementNew.setAttribute("name", key);
+            if (formatted != null && formatted.length() !=0) {
+                elementNew.setAttribute("formatted", formatted);
+            }
             elementNew.setTextContent(value);
             element.appendChild(elementNew);
             //write the updated document to file or console
@@ -246,7 +255,7 @@ public class CheckAndroidInternationalByiOS {
      * @param key
      * @param value
      */
-    private void addStringByDom(File file, String key1, String value1) {
+    private void addStringByDom(File file, String key1, String value1, String formatted) {
         if (!file.exists()) {
             return;
         }
@@ -262,6 +271,9 @@ public class CheckAndroidInternationalByiOS {
 
             Element elementNew = dt.createElement("string");
             elementNew.setAttribute("name", key1);
+            if (formatted != null && formatted.length() !=0) {
+                elementNew.setAttribute("formatted", formatted);
+            }
             elementNew.setTextContent(value1);
             element.appendChild(elementNew);
 
@@ -289,18 +301,33 @@ public class CheckAndroidInternationalByiOS {
     private List<StringXmlBean> compareAndroidAndiOS(List<StringXmlBean> cnNoEn, List<StringiOSBean> stringiOSBeans) {
         List<StringXmlBean> enList = new ArrayList<>();
 
-        for (StringXmlBean androidBean : cnNoEn) {
+        for ( int i = 0; i < cnNoEn.size(); i++) {
+            StringXmlBean androidBean = cnNoEn.get(i);
             //去标点再匹配
             String androidOriginStr = InternationalDocUtils.myFormatUtil(androidBean.getValue());
-            for (StringiOSBean iOSBean : stringiOSBeans) {
+            for (int j = 0; j < stringiOSBeans.size(); j++) {
+                StringiOSBean iOSBean = stringiOSBeans.get(j);
                 //去标点再匹配
                 String iOSOriginStr = InternationalDocUtils.myFormatUtil(iOSBean.getCnString());
                 if (androidOriginStr.equals(iOSOriginStr)) {
                     //将对象value变为ios英文
                     String foreignString = iOSBean.getForeignString();
-                    String androidForeignString = foreignString.replace("%@", "%s");
-                    androidBean.setValue(androidForeignString);
-                    enList.add(androidBean);
+                    //处理可能存在的占位符
+                    String androidForeignString = dealWithString(androidBean.getValue(), iOSBean.getCnString(), foreignString);
+                    if (androidForeignString == null || androidForeignString.length() == 0) {
+                        System.out.println("处理占位符时出现异常: anroidCN：" + androidBean.getValue()
+                                + ", android KEY : " + androidBean.getKey()
+                                + ", android path : " + androidBean.getFileName()
+                                + ", iosCN : " + iOSBean.getCnString()
+                                + ", ios EN: " + foreignString);
+                        continue;
+                    }
+                    StringXmlBean newResult = new StringXmlBean();
+                    newResult.setValue(androidForeignString);
+                    newResult.setFormatted(androidBean.getFormatted());
+                    newResult.setKey(androidBean.getKey());
+                    newResult.setFileName(androidBean.getFileName());
+                    enList.add(newResult);
                 }
             }
         }
@@ -429,6 +456,12 @@ public class CheckAndroidInternationalByiOS {
                     // 值
                     String value = node1.getTextContent();
 
+                    //formatted
+                    String formatted = null;
+                    if (node1.getAttributes().getNamedItem("formatted") != null) {
+                        formatted = node1.getAttributes().getNamedItem("formatted").getNodeValue();
+                    }
+
                     StringXmlBean stringXmlBean = new StringXmlBean();
                     String path = file.getPath();
                     String subPath = "";
@@ -438,6 +471,9 @@ public class CheckAndroidInternationalByiOS {
                     stringXmlBean.setFileName(subPath);
                     stringXmlBean.setKey(key);
                     stringXmlBean.setValue(value);
+                    if (formatted != null && formatted.length() !=0) {
+                        stringXmlBean.setFormatted(formatted);
+                    }
                     list.add(stringXmlBean);
                 }
             }
@@ -511,5 +547,102 @@ public class CheckAndroidInternationalByiOS {
             }
         }
         return iOSList;
+    }
+
+    /**
+     * 字符串处理 返回android对应ios正确的英文字符
+     * @param androidCn
+     * @param iOSCn
+     * @param iOSEn
+     * @return android EN
+     */
+    private String dealWithString(String androidCn, String iOSCn, String iOSEn) {
+        String[] palceHolderAllArray = {"%s","%@","%d","%x","%o","%f","%a","%e","%g","%n","%%","%ld","%lu","%zd","%1$s","%2$s","%3$s"
+                ,"%4$s","%1d","%2d","%3d","%4d","%.1f","%.2f","%.3f","%.4f","%1s","%2s","%3s","%4s"};
+
+        String androidEn = iOSEn;
+        List<PlaceHolder> androidCnPlaceHolderList = new ArrayList<>();
+        List<PlaceHolder> iOSCnHolderList = new ArrayList<>();
+        List<PlaceHolder> iOSEnHolderList = new ArrayList<>();
+
+        for (int i = 0; i < palceHolderAllArray.length; i++) {
+            androidCnPlaceHolderList = indexOfPlaceHolder(androidCnPlaceHolderList, androidCn, palceHolderAllArray[i]);
+            iOSCnHolderList = indexOfPlaceHolder(iOSCnHolderList, iOSCn, palceHolderAllArray[i]);
+            iOSEnHolderList = indexOfPlaceHolder(iOSEnHolderList, iOSEn, palceHolderAllArray[i]);
+        }
+        //排序
+        Collections.sort(androidCnPlaceHolderList);
+        Collections.sort(iOSCnHolderList);
+        Collections.sort(iOSEnHolderList);
+
+        //此时ios中英文list应当是相等的size
+        if (iOSCnHolderList.size() != iOSEnHolderList.size()
+                || androidCnPlaceHolderList.size() != iOSEnHolderList.size()
+                || iOSCnHolderList.size() != androidCnPlaceHolderList.size()) {
+            System.out.println("排序后不相等 , ios中文: " + iOSCnHolderList.size() + " : "+iOSCn
+                    + ", ios英文: " + iOSEnHolderList.size() + " : "+iOSEn
+                    + ", android 中文: " + androidCnPlaceHolderList.size() + " : "+androidCn);
+            return androidEn;
+        }
+        List<PlaceHolder> androidEnPlaceHolder = new ArrayList<>();
+        androidEnPlaceHolder.addAll(iOSEnHolderList);
+
+        String androidTH = "";
+        //开始比较
+        for (int i = 0; i < iOSCnHolderList.size(); i++) {
+            String androidCNPlaceHolder = androidCnPlaceHolderList.get(i).getPlaceHolder();
+            String iosCNPlaceHolder = iOSCnHolderList.get(i).getPlaceHolder();
+
+            boolean isMatch = false;
+            for (int j = 0; j < iOSEnHolderList.size(); j++) {
+                String enPlaceHolder = iOSEnHolderList.get(j).getPlaceHolder();
+                int enIndex = iOSEnHolderList.get(j).getPlaceHolderIndex();
+
+                //遍历时相等则认为可以替换, 替换android的占位符到ios英文
+                if (iosCNPlaceHolder.equals(enPlaceHolder)) {
+                    try {
+                        //加转义字符否则会抛出illegal group reference 异常
+                        String reEnPlaceHolder = java.util.regex.Matcher.quoteReplacement(enPlaceHolder);
+                        String reandroidPlaceHolder = java.util.regex.Matcher.quoteReplacement(androidCNPlaceHolder);
+
+                        //
+                        androidTH = androidEn.replaceAll(reEnPlaceHolder, reandroidPlaceHolder);
+                        androidEn = androidTH;
+                        isMatch = true;
+                    } catch (Exception e) {
+                        System.out.println("比较替换占位符时异常...");
+                        e.printStackTrace();
+                    }
+                }
+            }
+            if (!isMatch) {
+                System.out.println("处理占位符时出现异常未匹配: anroidCN：" + androidCn
+                        + ", ioscn : " + iOSCn
+                        + ", iOSEn : " + iOSEn
+                );
+            }
+        }
+        return androidEn;
+    }
+
+    /**
+     * 将原始字符串对应占位符信息导入list中
+     * @param list
+     * @param originStr
+     * @param placeHolder
+     * @return
+     */
+    private List<PlaceHolder> indexOfPlaceHolder(List<PlaceHolder> list, String originStr, String placeHolder) {
+        int i1 = originStr.indexOf(placeHolder);
+        if (i1 != -1) {
+            list.add(new PlaceHolder(placeHolder, i1));
+        }
+        while (i1 != -1){
+            i1 = originStr.indexOf(placeHolder, i1 + placeHolder.length());
+            if (i1 != -1) {
+                list.add(new PlaceHolder(placeHolder, i1));
+            }
+        }
+        return list;
     }
 }

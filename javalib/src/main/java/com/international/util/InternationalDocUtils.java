@@ -10,7 +10,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -153,11 +155,19 @@ public class InternationalDocUtils {
      * 通用字符 HAHA  标点
      */
     public static String myFormatUtil(String s) {
-        String str1 = s.replaceAll("(?:%s|%@|%d|%x|%o|%f|%a|%e|%g|%n|%%|%1$|%3$|%2$|%4$|%1d|%2d|%3d|%4d|%1$f|%2$f|%3$f|%4f)","HAHA");
-//        String str1 = s.replaceAll("%s","HAHA");
-
-
+        //先去掉空格
+        String s1 = s.replace(" ", "");
+        //再去掉占位符
+        String str1 = s1.replaceAll("(?:%s|%@|%d|%x|%o|%f|%a|%e|%g|%n|%%|%ld|%lu|%zd|%1\\$s|%2\\$s|%3\\$s|%4\\$s|%1d|%2d|%3d|%4d|%.1f|%.2f|%.3f|%.4f|%1s|%2s|%3s|%4s)","HAHA");
+        //再去除标点
         String str = str1.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘；：”“’。，、？|-]", "标点");
         return str;
+    }
+
+    public static List<String> placeHolderUtil(String s) {
+        List<String> placeHolders = new ArrayList<>();
+//        if () {
+////        }
+        return placeHolders;
     }
 }
