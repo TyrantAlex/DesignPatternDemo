@@ -1,8 +1,6 @@
 package com.international.thailand;
 
 import com.international.repeat.vo.StringXmlBean;
-import com.international.util.InternationalDocUtils;
-import com.international.util.InternationalFileUtils;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -23,33 +21,16 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 /**
- * 翻译回来的中文与英文按对应位置匹配到项目中
+ * 将android中英文有的字符串给泰文对应地方一份
  * @author : hongshen
- * @Date: 2018/6/19 0019
+ * @Date: 2018/6/28 0028
  */
-public class CheckAnroidTranslateEnglish {
+public class CheckAndroidEnUnTh {
 
     /**
-     * 翻译回来的中文文件路径
-     * 中英文按行一一对应
-     */
-    public static final String TRANS_CHINESE_PATH = "D:\\translateTemp\\replace2018.06.19\\translate_after\\0612zh";
-
-    /**
-     * 翻译回来的英文文件路径
-     * 中英文按行一一对应
-     */
-    public static final String TRANS_ENGLISH_PATH = "D:\\translateTemp\\replace2018.06.19\\translate_after\\0627thtrue";
-
-    /**
-     * 项目对应位置
+     * android项目对应位置
      */
     public static final String PROJECT_PATH = "D:/AndroidStudio/AndroidProject/Checkout3";
-
-    /**
-     * 所有文件的对应类型的所有String字符串对象
-     */
-    private List<StringXmlBean> allList = new ArrayList<>();
 
     /**
      * xml文件中标签key  标识此文件为何种values文件
@@ -58,82 +39,69 @@ public class CheckAnroidTranslateEnglish {
     private static final String FILE_NODE_KEY = "string";
 
     /**
+     * String文件类型目标文件夹
+     */
+//    private static final String DIRECT_FOLDER_VALUES = "values";
+    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
+//    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
+    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
+
+    /**
      * 路径打印时候无用的路径部分 如需全路径则置空
      * D:\AndroidStudio\AndroidProject\Checkout3\
      */
     private String fileUnuseName = "";
 
     /**
-     * String文件类型目标文件夹
+     * 所有文件的对应类型的所有中文String字符串对象
      */
-    private static final String DIRECT_FOLDER_VALUES = "values";
-//    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
-//    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
-    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
+    private List<StringXmlBean> allList = new ArrayList<>();
 
     public static void main(String[] args) {
-        CheckAnroidTranslateEnglish check = new CheckAnroidTranslateEnglish();
-        System.out.println("------------------------------------START------------------------------");
+        CheckAndroidEnUnTh check = new CheckAndroidEnUnTh();
         check.start();
-        System.out.println("------------------------------------END---------------------------------");
     }
 
     private void start() {
-        //翻译后的中英文对应放入集合中
-        List<String> transENList = new ArrayList<>();
-        List<String> transCNList = new ArrayList<>();
+        //取所有英文
+        //将android英文取出组成list
+        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_EN);
+        List<StringXmlBean> allEN= new ArrayList<>();
+        allEN.addAll(allList);
+        System.out.println("所有英文字符数量: " + allList.size());
+        allList.clear();
 
-        try {
-            transENList = InternationalFileUtils.readFileByLine(TRANS_ENGLISH_PATH);
-            transCNList = InternationalFileUtils.readFileByLine(TRANS_CHINESE_PATH);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        //取所有泰文
+        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_TH);
+        List<StringXmlBean> allTH= new ArrayList<>();
+        allTH.addAll(allList);
+        System.out.println("所有泰文字符数量: " + allList.size());
+        allList.clear();
 
-        if (transCNList == null || transCNList.size() == 0) {
-            System.out.println("读取翻译后中文文件失败");
-        }else{
-            System.out.println("翻译后中文文件size = " + transCNList.size());
-        }
+        //比较英文有泰文没有的
+        List<StringXmlBean> beanList = compareAndroidCNAndEn(allEN, allTH);
+        System.out.println("所有有英文有泰文没有的 字符数量: " + beanList.size());
 
-        if (transENList == null || transENList.size() == 0) {
-            System.out.println("读取翻译后英文文件失败");
-        } else {
-            System.out.println("翻译后英文文件size = " + transENList.size());
-        }
-
-        //查询项目目录中所有的中文字符与key
-        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES);
-        System.out.println("所有中文字符数量: " + allList.size());
-
-        //比较所有中文与翻译回来的中文集合, 找出相符的key与文件对应位置放入集合
-        List<StringXmlBean> checkBeanList = checkTranslate(transCNList, transENList);
-        System.out.println("比较翻译后集合数量: " + checkBeanList.size());
-
-        //是否有未匹配上的翻译后文字
-        for (String str : transENList) {
-            boolean isMatch = false;
-            for (StringXmlBean bean : checkBeanList) {
-                if (bean.getValue().equals(str)) {
-                    isMatch = true;
+        //去重
+        for  ( int  i  =   0 ; i  <  beanList.size()  -   1 ; i ++ )  {
+            for  ( int  j  =  beanList.size()  -   1 ; j  >  i; j -- )  {
+                if  (beanList.get(j).getKey().equals(beanList.get(i).getKey()) && beanList.get(j).getFileName().equals(beanList.get(i).getFileName()))  {
+//                    System.out.println("需要补充的英文字符重复的key且在同一份文件中 : " + beanList.get(i).getKey());
+                    beanList.remove(j);
                 }
             }
-            if (!isMatch) {
-                System.out.println("翻译后文件未匹配上的字符串为: " + str);
-            }
         }
 
-        //查询集合中对应中文位置对应的英文文件, 遍历英文文件 如果有则替换无则添加
-        replaceStringFilePath(checkBeanList);
+        //比较英文有泰文没有的写入对应文件最下面
+        write2CorrespondFile(beanList);
     }
 
     /**
-     * 执行替换
-     * 此时bean中存放的应当是中文key 英文value 中文string文件地址
-     * @param checkBeanList
+     * 将list中的对象写入各自英文文件中
+     * @param beanList
      */
-    private void replaceStringFilePath(List<StringXmlBean> checkBeanList) {
-        for (StringXmlBean bean : checkBeanList) {
+    private void write2CorrespondFile(List<StringXmlBean> beanList) {
+        for (StringXmlBean bean : beanList) {
             String value = bean.getValue();
             String key = bean.getKey();
             String filePath = bean.getFileName();
@@ -145,7 +113,7 @@ public class CheckAnroidTranslateEnglish {
             File parent = file.getParentFile();
             //values父一级 string文件祖父一级
             String grandparent = parent.getParent();
-            //替换为英文目录
+            //替换为国际化目录
             String englishDir = grandparent + File.separator + DIRECT_FOLDER_VALUES_TH;
 
             File file1 = new File(englishDir);
@@ -161,7 +129,7 @@ public class CheckAnroidTranslateEnglish {
                     //判断是否为string文件
                     if (nodeKeyFile) {
                         //dom解析读取文件并执行添加
-                        replaceStringByDom(files[0], key, value, formatted);
+                        addStringByDom(files[0], key, value, formatted);
                     }else{
                         System.out.println("当前英文目录存放的不是string文件: " + files.length + " ," + files[0].getPath());
                     }
@@ -183,7 +151,7 @@ public class CheckAnroidTranslateEnglish {
      * @param key
      * @param value
      */
-    private void createForiegnFile(String englishDir, String fileName, String key, String value, String fomatted) {
+    private void createForiegnFile(String englishDir, String fileName, String key, String value, String formatted) {
         //建立英文目录文件
         String enStringFilePath = englishDir + File.separator + fileName;
         File fileEn = new File(enStringFilePath);
@@ -195,7 +163,7 @@ public class CheckAnroidTranslateEnglish {
         try {
             boolean newFile = fileEn.createNewFile();
             if (newFile) {
-                createStringByDom(fileEn,key,value, fomatted);
+                createStringByDom(fileEn,key,value, formatted);
                 System.out.println("创建英文目录文件成功: " + englishDir);
             } else {
                 System.out.println("创建英文目录文件失败: " + englishDir);
@@ -264,7 +232,7 @@ public class CheckAnroidTranslateEnglish {
      * @param key
      * @param value
      */
-    private void replaceStringByDom(File file, String key1, String value1, String formatted) {
+    private void addStringByDom(File file, String key1, String value1, String formatted) {
         if (!file.exists()) {
             return;
         }
@@ -277,93 +245,51 @@ public class CheckAnroidTranslateEnglish {
             db = dbf.newDocumentBuilder();
             Document dt = db.parse(file);
             element = dt.getDocumentElement();
-            NodeList childNodes = element.getChildNodes();
-            //匹配次数
-            int matchNum = 0;
-            for (int i = 0; i < childNodes.getLength(); i++) {
-                Node node1 = childNodes.item(i);
-                if ("string".equals(node1.getNodeName())) {
-                    // 键
-                    String filekey = node1.getAttributes().getNamedItem("name")
-                            .getNodeValue();
-                    // 值
-                    String filevalue = node1.getTextContent();
 
-                    //取到xml文件键值开始匹配
-                    if (filekey.equals(key1)) {
-                        node1.setTextContent(value1);
-                        if (formatted != null && formatted.length() != 0) {
-                            Element element1 = (Element) node1;
-                            element1.setAttribute("formatted", formatted);
-                        }
-                        matchNum++;
-                    }
-                }
+            Element elementNew = dt.createElement("string");
+            elementNew.setAttribute("name", key1);
+            if (formatted != null && formatted.length() !=0) {
+                elementNew.setAttribute("formatted", formatted);
             }
-            if (matchNum == 0) {
-                //直接添加
-                //获取String元素
-                Element elementNew = dt.createElement("string");
-                elementNew.setAttribute("name", key1);
-                if (formatted != null && formatted.length() !=0) {
-                    elementNew.setAttribute("formatted", formatted);
-                }
-                elementNew.setTextContent(value1);
-                element.appendChild(elementNew);
-                System.out.println("无匹配项直接添加元素"+ "key : " + key1 + ", value: " + value1 + ", path：" + file.getPath());
-            }
+            elementNew.setTextContent(value1);
+            element.appendChild(elementNew);
+
             //write the updated document to file or console
-            dt.getDocumentElement().normalize();
+//            dt.getDocumentElement().normalize();
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
             DOMSource source = new DOMSource(dt);
             StreamResult result = new StreamResult(file);
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.transform(source, result);
-            System.out.println("替换英文字符完毕...");
+//            System.out.println("替换英文字符完毕...");
         } catch (Exception e) {
-            System.out.println("替换英文字符...");
+            System.out.println("替换ios英文字符异常...");
             e.printStackTrace();
         }
     }
 
-    /**
-     * 比较所有中文与翻译后中文相符的对象放入一个集合中
-     * @param transCNList 翻译后中文集合
-     * @return
-     */
-    private List<StringXmlBean> checkTranslate(List<String> transCNList, List<String> transENList) {
-        List<StringXmlBean> checkedList = new ArrayList<>();
-        for (StringXmlBean bean : allList) {
-            //检测重复字符 避免多次添加
-            boolean isRepeat = false;
-            //去标点再比较
-//            String originBean = InternationalDocUtils.myFormatUtil(bean.getValue());
-            for (int i = 0; i < transCNList.size(); i++) {
-                String transedCNStr = transCNList.get(i);
-                String transedENStr = transENList.get(i);
 
-                //去标点再比较
-//                String originTrans = InternationalDocUtils.myFormatUtil(transedStr);
-//                if (originTrans.equals(originBean)) {
-                if (transedCNStr.equals(bean.getValue())) {
-                    if (!isRepeat) {
-                        /**
-                         * 获取英文value 替换中文bean中的value
-                         * 此时bean中存放的应当是中文key 英文value 中文string文件地址
-                         */
-                        String androidForeignString = transedENStr.replace("%@", "%s");
-                        androidForeignString = androidForeignString.replace("'", "\\'");
-                        bean.setValue(transedENStr);
-                        checkedList.add(bean);
-                    } else {
-                        System.out.println("重复的翻译后字符串为: " + transedCNStr);
-                    }
-                    isRepeat = true;
+    /**
+     * 比较android中英文list key 取出有中文无英文的组成list
+     * @param allCN
+     * @param allEN
+     */
+    private List<StringXmlBean> compareAndroidCNAndEn(List<StringXmlBean> allCN, List<StringXmlBean> allEN) {
+        //有中文无英文的
+        List<StringXmlBean> cnNoEn = new ArrayList<>();
+        for (StringXmlBean cnBean : allCN) {
+            boolean isHaveEn = false;
+            for (StringXmlBean enBean : allEN) {
+                if (cnBean.getKey().equals(enBean.getKey())) {
+                    isHaveEn = true;
                 }
             }
+            if (!isHaveEn) {
+                cnNoEn.add(cnBean);
+            }
         }
-        return checkedList;
+        return cnNoEn;
     }
 
     /**

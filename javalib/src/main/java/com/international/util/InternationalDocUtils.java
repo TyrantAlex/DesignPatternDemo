@@ -151,16 +151,16 @@ public class InternationalDocUtils {
 
     /**
      * 字符串去标点
-     * 这里最好全部替换成通用字符, 不然语义有可能发生变化
-     * 通用字符 HAHA  标点
+     * 占位符这里最好全部替换成通用字符, 不然语义有可能发生变化
+     * 通用字符 HAHA
      */
     public static String myFormatUtil(String s) {
         //先去掉空格
-        String s1 = s.replace(" ", "");
+        String s1 = s.replaceAll(" ", "");
         //再去掉占位符
         String str1 = s1.replaceAll("(?:%s|%@|%d|%x|%o|%f|%a|%e|%g|%n|%%|%ld|%lu|%zd|%1\\$s|%2\\$s|%3\\$s|%4\\$s|%1d|%2d|%3d|%4d|%.1f|%.2f|%.3f|%.4f|%1s|%2s|%3s|%4s)","HAHA");
         //再去除标点
-        String str = str1.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘；：”“’。，、？|-]", "标点");
+        String str = str1.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘；：”“’。，、？|-]", "");
         return str;
     }
 

@@ -28,11 +28,11 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 /**
- * 匹配ios的国际化文件并实现与android国际化对比并替换
+ * 查询android与ios中文有多少个不一致的
  * @author : hongshen
  * @Date: 2018/6/20 0020
  */
-public class CheckAndroidInternationalByiOS {
+public class CheckAndroidInconsistentByiOS {
 
     /**
      * android项目对应位置
@@ -72,7 +72,7 @@ public class CheckAndroidInternationalByiOS {
     private List<StringXmlBean> allList = new ArrayList<>();
 
     public static void main(String[] args) {
-        CheckAndroidInternationalByiOS check = new CheckAndroidInternationalByiOS();
+        CheckAndroidInconsistentByiOS check = new CheckAndroidInconsistentByiOS();
         check.start();
     }
 
@@ -85,38 +85,43 @@ public class CheckAndroidInternationalByiOS {
         allList.clear();
 
         //将android英文取出组成list
-        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_EN);
-        List<StringXmlBean> allEN= new ArrayList<>();
-        allEN.addAll(allList);
-        System.out.println("所有国际化字符数量: " + allList.size());
-        allList.clear();
+//        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_EN);
+//        List<StringXmlBean> allEN= new ArrayList<>();
+//        allEN.addAll(allList);
+//        System.out.println("所有国际化字符数量: " + allList.size());
+//        allList.clear();
 
         //比较android中英文key 取出有中文无英文的组成list
-        List<StringXmlBean> cnNoEn = compareAndroidCNAndEn(allCN, allEN);
-        System.out.println("所有有中文需翻译成外文 字符数量: " + cnNoEn.size());
+//        List<StringXmlBean> cnNoEn = compareAndroidCNAndEn(allCN, allEN);
+//        System.out.println("所有有中文需翻译成外文 字符数量: " + cnNoEn.size());
 
         //将ios文件取出并组成list
         List<StringiOSBean> stringiOSBeans = splitFileStrByLine2List(IOS_FILE_PATH);
         System.out.println("所有ios字符数量: " + stringiOSBeans.size());
 
         //比较android剩下的list和ios list比较 生成新的英文list
-        List<StringXmlBean> beanList = compareAndroidAndiOS(cnNoEn, stringiOSBeans);
-        System.out.println("需要补充的外文字符数量 : " + beanList.size());
+//        List<StringXmlBean> beanList = compareAndroidAndiOS(cnNoEn, stringiOSBeans);
+//        System.out.println("需要补充的外文字符数量 : " + beanList.size());
 
+        //比较android中文与ios中文找出差异
+        List<StringXmlBean> beanList = compareAndroidCN2iOSCN(allCN, stringiOSBeans);
+        System.out.println("需要补充的差异字符数量 : " + beanList.size());
 
         //去重
         for  ( int  i  =   0 ; i  <  beanList.size()  -   1 ; i ++ )  {
             for  ( int  j  =  beanList.size()  -   1 ; j  >  i; j -- )  {
-                if  (beanList.get(j).getKey().equals(beanList.get(i).getKey()) && beanList.get(j).getFileName().equals(beanList.get(i).getFileName()))  {
-//                    System.out.println("需要补充的英文字符重复的key且在同一份文件中 : " + beanList.get(i).getKey());
+                //key path 相同
+//                if  (beanList.get(j).getKey().equals(beanList.get(i).getKey()) && beanList.get(j).getFileName().equals(beanList.get(i).getFileName()))  {
+                //key value 相同
+                if  (beanList.get(j).getKey().equals(beanList.get(i).getKey()) && beanList.get(j).getValue().equals(beanList.get(i).getValue()))  {
                     beanList.remove(j);
                 }
             }
         }
-        System.out.println("去重后的 需要补充的英文字符数量: " + beanList.size());
+        System.out.println("去重后的 差生差异的字符串有: " + beanList.size());
 
         //将英文写入各自文件，直接写在最后
-        write2CorrespondFile(beanList);
+//        write2CorrespondFile(beanList);
     }
 
     /**
@@ -332,6 +337,37 @@ public class CheckAndroidInternationalByiOS {
             }
         }
         return enList;
+    }
+
+    /**
+     * 比较android与ioscn差异
+     * @param androidCN
+     * @param stringiOSBeans
+     * @return 返回android与ios不一致的部分
+     */
+    private List<StringXmlBean> compareAndroidCN2iOSCN(List<StringXmlBean> androidCN, List<StringiOSBean> stringiOSBeans) {
+        List<StringXmlBean> cnNo = new ArrayList<>();
+
+        for (int i = 0; i < androidCN.size(); i++) {
+            StringXmlBean androidBean = androidCN.get(i);
+            boolean isMatch = false;
+            //去标点再匹配
+            String androidOriginStr = InternationalDocUtils.myFormatUtil(androidBean.getValue());
+            for (int j = 0; j < stringiOSBeans.size(); j++) {
+                StringiOSBean iOSBean = stringiOSBeans.get(j);
+                //去标点再匹配
+                String iOSOriginStr = InternationalDocUtils.myFormatUtil(iOSBean.getCnString());
+                if (androidOriginStr.equals(iOSOriginStr)) {
+                    isMatch = true;
+                }
+            }
+
+            if (!isMatch) {
+                cnNo.add(androidBean);
+            }
+        }
+
+        return cnNo;
     }
 
     /**

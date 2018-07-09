@@ -32,7 +32,7 @@ import javax.xml.transform.stream.StreamResult;
  * @author : hongshen
  * @Date: 2018/6/20 0020
  */
-public class CheckAndroidInternationalByiOS {
+public class CheckAndroidUntranslateString {
 
     /**
      * android项目对应位置
@@ -44,7 +44,7 @@ public class CheckAndroidInternationalByiOS {
      * 0627iosen
      * 0627iosth
      */
-    private static final String IOS_FILE_PATH = "D:\\translateTemp\\replace2018.06.19\\translate_after\\0629iosen";
+    private static final String IOS_FILE_PATH = "D:\\translateTemp\\replace2018.06.19\\translate_after\\0627iosth";
 
     /**
      * xml文件中标签key  标识此文件为何种values文件
@@ -56,9 +56,9 @@ public class CheckAndroidInternationalByiOS {
      * String文件类型目标文件夹
      */
     private static final String DIRECT_FOLDER_VALUES = "values";
-    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
+//    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
 //    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
-//    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
+    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
 
     /**
      * 路径打印时候无用的路径部分 如需全路径则置空
@@ -72,7 +72,7 @@ public class CheckAndroidInternationalByiOS {
     private List<StringXmlBean> allList = new ArrayList<>();
 
     public static void main(String[] args) {
-        CheckAndroidInternationalByiOS check = new CheckAndroidInternationalByiOS();
+        CheckAndroidUntranslateString check = new CheckAndroidUntranslateString();
         check.start();
     }
 
@@ -85,7 +85,7 @@ public class CheckAndroidInternationalByiOS {
         allList.clear();
 
         //将android英文取出组成list
-        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_EN);
+        checkOnMultiFolder(PROJECT_PATH, DIRECT_FOLDER_VALUES_TH);
         List<StringXmlBean> allEN= new ArrayList<>();
         allEN.addAll(allList);
         System.out.println("所有国际化字符数量: " + allList.size());
@@ -99,24 +99,86 @@ public class CheckAndroidInternationalByiOS {
         List<StringiOSBean> stringiOSBeans = splitFileStrByLine2List(IOS_FILE_PATH);
         System.out.println("所有ios字符数量: " + stringiOSBeans.size());
 
-        //比较android剩下的list和ios list比较 生成新的英文list
-        List<StringXmlBean> beanList = compareAndroidAndiOS(cnNoEn, stringiOSBeans);
-        System.out.println("需要补充的外文字符数量 : " + beanList.size());
-
+        //比较android需要翻译外文的和ios文件选出不一致的，也就是需要重新翻译的
+        List<StringXmlBean> beanList = compareAndroidAndiOSInconsistent(cnNoEn, stringiOSBeans);
+        System.out.println("所有需要另外翻译的字符数量: " + beanList.size());
 
         //去重
-        for  ( int  i  =   0 ; i  <  beanList.size()  -   1 ; i ++ )  {
-            for  ( int  j  =  beanList.size()  -   1 ; j  >  i; j -- )  {
-                if  (beanList.get(j).getKey().equals(beanList.get(i).getKey()) && beanList.get(j).getFileName().equals(beanList.get(i).getFileName()))  {
+        List<StringXmlBean> beanList1 = deRepeat(beanList);
+
+        System.out.println("start====================================================================================================================");
+        for (StringXmlBean bean : beanList1) {
+            System.out.println(bean.getValue());
+        }
+        System.out.println("end====================================================================================================================");
+
+
+
+//        //比较android剩下的list和ios list比较 生成新的英文list
+//        List<StringXmlBean> beanList = compareAndroidAndiOS(cnNoEn, stringiOSBeans);
+//        System.out.println("需要补充的外文字符数量 : " + beanList.size());
+//
+//
+//        //去重
+//        for  ( int  i  =   0 ; i  <  beanList.size()  -   1 ; i ++ )  {
+//            for  ( int  j  =  beanList.size()  -   1 ; j  >  i; j -- )  {
+//                if  (beanList.get(j).getKey().equals(beanList.get(i).getKey()) && beanList.get(j).getFileName().equals(beanList.get(i).getFileName()))  {
+////                    System.out.println("需要补充的英文字符重复的key且在同一份文件中 : " + beanList.get(i).getKey());
+//                    beanList.remove(j);
+//                }
+//            }
+//        }
+//        System.out.println("去重后的 需要补充的英文字符数量: " + beanList.size());
+//
+//        //将英文写入各自文件，直接写在最后
+//        write2CorrespondFile(beanList);
+    }
+
+    /**
+     * list去重
+     * @param beanList
+     * @return
+     */
+    private List<StringXmlBean> deRepeat(List<StringXmlBean> beanList) {
+        //去重
+        for (int i = 0; i < beanList.size() - 1; i++) {
+            for (int j = beanList.size() - 1; j > i; j--) {
+                if ((beanList.get(j).getKey().equals(beanList.get(i).getKey()) && beanList.get(j).getFileName().equals(beanList.get(i).getFileName())) || beanList.get(j).getValue().equals(beanList.get(i).getValue())) {
 //                    System.out.println("需要补充的英文字符重复的key且在同一份文件中 : " + beanList.get(i).getKey());
                     beanList.remove(j);
                 }
             }
         }
-        System.out.println("去重后的 需要补充的英文字符数量: " + beanList.size());
+        System.out.println("去重后的 需要补充的国际化字符数量: " + beanList.size());
+        return beanList;
+    }
 
-        //将英文写入各自文件，直接写在最后
-        write2CorrespondFile(beanList);
+    /**
+     * 比较android待翻译与ios文件不一致的 需要重新翻译的
+     * @param cnNoEn
+     * @param stringiOSBeans
+     */
+    private List<StringXmlBean> compareAndroidAndiOSInconsistent(List<StringXmlBean> cnNoEn, List<StringiOSBean> stringiOSBeans) {
+        List<StringXmlBean> android = new ArrayList<>();
+
+        for (int i = 0; i < cnNoEn.size(); i++) {
+            String androidValue = cnNoEn.get(i).getValue();
+            //去标点再匹配
+            String androidOriginStr = InternationalDocUtils.myFormatUtil(androidValue);
+            boolean isMatch = false;
+            for (int j = 0; j < stringiOSBeans.size(); j++) {
+                String iOSValue = stringiOSBeans.get(j).getForeignString();
+                //去标点再匹配
+                String iosOriginStr = InternationalDocUtils.myFormatUtil(iOSValue);
+                if (androidOriginStr.equals(iosOriginStr)) {
+                    isMatch = true;
+                }
+            }
+            if (!isMatch) {
+                android.add(cnNoEn.get(i));
+            }
+        }
+        return android;
     }
 
     /**
@@ -137,7 +199,7 @@ public class CheckAndroidInternationalByiOS {
             //values父一级 string文件祖父一级
             String grandparent = parent.getParent();
             //替换为国际化目录
-            String englishDir = grandparent + File.separator + DIRECT_FOLDER_VALUES_EN;
+            String englishDir = grandparent + File.separator + DIRECT_FOLDER_VALUES_TH;
 
             File file1 = new File(englishDir);
             if (!file1.exists()) {
