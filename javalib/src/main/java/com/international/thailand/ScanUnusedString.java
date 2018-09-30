@@ -49,9 +49,10 @@ public class ScanUnusedString {
     /**
      * 目标文件夹
      */
-    private static final String DIRECT_FOLDER_VALUES = "values";
-    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
-    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
+//    private static final String DIRECT_FOLDER_VALUES = "values";
+//    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
+//    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
+    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
 
     /**
      * 所有文件的所有String字符串对象
@@ -63,7 +64,7 @@ public class ScanUnusedString {
     public static void main(String[] args) {
         System.out.println("Start Scan............................................................................");
         ScanUnusedString check = new ScanUnusedString();
-        check.checkOnMultiFolder(FILE_PATH, DIRECT_FOLDER_VALUES);
+        check.checkOnMultiFolder(FILE_PATH, DIRECT_FOLDER_VALUES_TH);
         check.scanJavaDoc(FILE_PATH);
         check.excuteScan();
         System.out.println("End Scan............................................................................");
@@ -241,6 +242,9 @@ public class ScanUnusedString {
                     // 键
                     String key = node1.getAttributes().getNamedItem("name")
                             .getNodeValue();
+                    if ("dfire_temporary_translation_cannot_delete".equals(key) || "dfire_temporary_translation_cannot_delete_end".equals(key)) {
+                        continue;
+                    }
                     // 值
                     String value = node1.getTextContent();
 

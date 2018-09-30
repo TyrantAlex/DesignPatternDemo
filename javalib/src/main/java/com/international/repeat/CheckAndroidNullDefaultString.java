@@ -25,42 +25,92 @@ import javax.xml.parsers.DocumentBuilderFactory;
  */
 public class CheckAndroidNullDefaultString {
 
-    private static final String singlePath = "D:/translateTemp/replace2018.04.27";
+//    private static final String singlePath = "D:/translateTemp/replace2018.04.27";
 
-    private static final String multiPath = "D:/AndroidStudio/AndroidProject/Checkout4";
-
-    /**
-     * values 目录下所有String字符串对象
-     */
-    private List<StringXmlBean> valuesList = new ArrayList<>();
+    private static final String multiPath = "D:/AndroidStudio/AndroidProject/Checkout3";
 
     /**
-     * values-en 目录下所有String字符串对象
+     * 路径打印时候无用的路径部分 如需全路径则置空
+     * D:\AndroidStudio\AndroidProject\Checkout3\
      */
-    private List<StringXmlBean> enList = new ArrayList<>();
+    private String fileUnuseName = "";
 
     /**
-     * values-zh-rTW 目录下所有String字符串对象
+     * xml文件中标签key  标识此文件为何种values文件
+     * color; style; dimen; declare-styleable; string
      */
-    private List<StringXmlBean> twList = new ArrayList<>();
+    private static final String FILE_NODE_KEY = "string";
+
+    /**
+     * String文件类型目标文件夹
+     */
+    private static final String DIRECT_FOLDER_VALUES = "values";
+    private static final String DIRECT_FOLDER_VALUES_EN = "values-en";
+    private static final String DIRECT_FOLDER_VALUES_TW = "values-zh-rTW";
+    private static final String DIRECT_FOLDER_VALUES_TH = "values-th-rTH";
+
+    /**
+     * 所有文件的对应类型的所有中文String字符串对象
+     */
+    private List<StringXmlBean> allList = new ArrayList<>();
 
     public static int num = 0;
 
-
     public static void main(String[] args){
-        CheckAndroidNullDefaultString checkAndroidRepeatString = new CheckAndroidNullDefaultString();
+        CheckAndroidNullDefaultString checkAndroidNullDefaultString = new CheckAndroidNullDefaultString();
         System.out.println("----------------------------------start-----------------------------------------");
-        checkAndroidRepeatString.checkOnMultiFolder(multiPath);
-
-        checkAndroidRepeatString.printNullDefaultString();
-        System.out.println("******** VALUES NUM = " + num);
+        checkAndroidNullDefaultString.start();
         System.out.println("----------------------------------end-----------------------------------------");
+    }
+
+    private void start() {
+        //values 目录下所有String字符串对象
+        List<StringXmlBean> valuesList = new ArrayList<>();
+        checkOnMultiFolder(multiPath, DIRECT_FOLDER_VALUES);
+        valuesList.addAll(allList);
+        allList.clear();
+
+        //values-en 目录下所有String字符串对象
+        List<StringXmlBean> enList = new ArrayList<>();
+        checkOnMultiFolder(multiPath, DIRECT_FOLDER_VALUES_EN);
+        enList.addAll(allList);
+        allList.clear();
+
+        System.out.println("开始打印缺省values的en.....");
+        //打印缺省values的en
+        printNullDefaultString(valuesList, enList);
+        enList.clear();
+
+        //values-zh-rTW 目录下所有String字符串对象
+        List<StringXmlBean> twList = new ArrayList<>();
+        checkOnMultiFolder(multiPath, DIRECT_FOLDER_VALUES_TW);
+        twList.addAll(allList);
+        allList.clear();
+
+        System.out.println("开始打印缺省values的tw.....");
+        //打印缺省values的tw
+        printNullDefaultString(valuesList, twList);
+        twList.clear();
+
+        //values-th-rTH 目录下所有String字符串对象
+        List<StringXmlBean> thList = new ArrayList<>();
+        checkOnMultiFolder(multiPath, DIRECT_FOLDER_VALUES_TH);
+        thList.addAll(allList);
+        allList.clear();
+
+        System.out.println("开始打印缺省values的th.....");
+        //打印缺省values的th
+        printNullDefaultString(valuesList, thList);
+        thList.clear();
+        System.out.println("******** VALUES NUM = " + num);
     }
 
     /**
      * 打印出缺省默认值的String信息
+     * @param valuesList 默认values
+     * @param enList 待比较的国际化values
      */
-    private void printNullDefaultString() {
+    private void printNullDefaultString(List<StringXmlBean> valuesList, List<StringXmlBean> enList) {
         //set去重
         List<StringXmlBean> allList = new ArrayList<>();
         Set<String> keySet = new HashSet<>();
@@ -82,49 +132,23 @@ public class CheckAndroidNullDefaultString {
             }
         }
 
-        for (int i = 0; i < twList.size(); i++) {
-            boolean isExsit = false;
-            StringXmlBean twBean = twList.get(i);
-            for (int j = 0; j < valuesList.size(); j++) {
-                StringXmlBean values = valuesList.get(j);
-                if (twBean.getKey().equals(values.getKey())) {
-                    isExsit = true;
-                }
-            }
-            if (!isExsit) {
-                num++;
-                if (keySet.add(twBean.getKey())) {
-                    allList.add(twBean);
-                }
-            }
-        }
-
         for (int i = 0; i < allList.size(); i++) {
             StringXmlBean bean = allList.get(i);
-            System.out.println("| " + bean.getFileName()
-                    + "| " + bean.getKey()
-//                    + "| " + bean.getValue()
-                    + "| | 未完成|");
-        }
-        System.out.println("******** SET NUM = " + allList.size());
-
-//        Iterator<StringXmlBean> iterator = set.iterator();
-//        while (iterator.hasNext()){
-//            StringXmlBean bean = iterator.next();
 //            System.out.println("| " + bean.getFileName()
 //                    + "| " + bean.getKey()
-//                    + "| " + bean.getValue()
-//                    + "| | |");
-//            System.out.println("");
-//        }
-//        System.out.println("******** SET NUM = " + set.size());
+////                    + "| " + bean.getValue()
+//                    + "| | 未完成|");
+            System.out.println("key = " + bean.getKey() + "\n value = " + bean.getValue() + "\n filePath = " + bean.getFileName());
+        }
+        System.out.println("******** SET NUM = " + allList.size());
     }
 
     /**
      * 查找文件
      * 读取一个路径下多个文件夹的指定文件
+     * return 当前文件夹下所有符合的数据list集合
      */
-    private void checkOnMultiFolder(String baseDirName){
+    private void checkOnMultiFolder(String baseDirName, String directFoldString) {
         File baseDir = new File(baseDirName);       // 创建一个File对象
         if (!baseDir.exists() || !baseDir.isDirectory()) {  // 判断目录是否存在
             System.out.println("文件查找失败：" + baseDirName + "不是一个目录！");
@@ -133,60 +157,62 @@ public class CheckAndroidNullDefaultString {
         //判断目录是否存在
         File tempFile;
         File[] files = baseDir.listFiles();
-
         for (int i = 0; i < files.length; i++) {
             tempFile = files[i];
-            if(tempFile.isDirectory()){
-                checkOnMultiFolder(tempFile.getAbsolutePath());
-            }else if(tempFile.isFile()){
+            if (tempFile.isDirectory()) {
+                checkOnMultiFolder(tempFile.getAbsolutePath(), directFoldString);
+            } else if (tempFile.isFile()) {
                 //只扫描values文件夹
                 String parent = tempFile.getParent();
                 boolean isBuild = parent.contains("\\build\\");
                 if (isBuild) {
                     continue;
                 }
-                boolean isValues = parent.endsWith("values");
-                boolean isEn = parent.endsWith("values-en");
-                boolean isTW = parent.endsWith("values-zh-rTW");
+                boolean isValues = parent.endsWith(directFoldString);
                 if (isValues) {
-                    tempName = tempFile.getName();
-                    if (tempName.contains("tring")) {
-//                        String path = tempFile.getPath();
-//                        String absolutePath = tempFile.getAbsolutePath();
-//                        System.out.println("******** VALUES PATH = " + path);
-                        // 匹配成功，将文件名添加到结果集
+                    boolean stringFile = isNodeKeyFile(tempFile);
+                    if (stringFile) {
                         List<StringXmlBean> beanList = splitStringXml2Map(tempFile);
                         if (beanList != null) {
-                            valuesList.addAll(beanList);
-                        }
-                    }
-                }
-                if (isEn) {
-                    tempName = tempFile.getName();
-                    if (tempName.contains("tring")) {
-//                        valuesFolad++;
-//                        String path = tempFile.getPath();
-//                        String absolutePath = tempFile.getAbsolutePath();
-//                        System.out.println("----------- EN PATH = " + path);
-                        // 匹配成功，将文件名添加到结果集
-                        List<StringXmlBean> beanList = splitStringXml2Map(tempFile);
-                        if (beanList != null) {
-                            enList.addAll(beanList);
-                        }
-                    }
-                }
-                if (isTW) {
-                    tempName = tempFile.getName();
-                    if (tempName.contains("tring")) {
-                        // 匹配成功，将文件名添加到结果集
-                        List<StringXmlBean> beanList = splitStringXml2Map(tempFile);
-                        if (beanList != null) {
-                            twList.addAll(beanList);
+                            allList.addAll(beanList);
                         }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * 标识对应文件身份
+     *
+     * @param file
+     * @return
+     */
+    private boolean isNodeKeyFile(File file) {
+        boolean isNodeKeyFile = false;
+        if (!file.exists()) {
+            return false;
+        }
+        Element element;
+        DocumentBuilder db;
+        DocumentBuilderFactory dbf;
+        try {
+            dbf = DocumentBuilderFactory.newInstance();
+            db = dbf.newDocumentBuilder();
+            Document dt = db.parse(file);
+            element = dt.getDocumentElement();
+            NodeList childNodes = element.getChildNodes();
+            for (int i = 0; i < childNodes.getLength(); i++) {
+                Node node1 = childNodes.item(i);
+                if (FILE_NODE_KEY.equals(node1.getNodeName())) {
+                    isNodeKeyFile = true;
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return isNodeKeyFile;
     }
 
     /**
@@ -217,8 +243,13 @@ public class CheckAndroidNullDefaultString {
                     // 值
                     String value = node1.getTextContent();
 
+                    //formatted
+                    String formatted = null;
+                    if (node1.getAttributes().getNamedItem("formatted") != null) {
+                        formatted = node1.getAttributes().getNamedItem("formatted").getNodeValue();
+                    }
+
                     StringXmlBean stringXmlBean = new StringXmlBean();
-                    String fileUnuseName = "D:\\AndroidStudio\\AndroidProject\\Checkout4\\";
                     String path = file.getPath();
                     String subPath = "";
                     if (path.contains(fileUnuseName)) {
@@ -227,6 +258,9 @@ public class CheckAndroidNullDefaultString {
                     stringXmlBean.setFileName(subPath);
                     stringXmlBean.setKey(key);
                     stringXmlBean.setValue(value);
+                    if (formatted != null && formatted.length() !=0) {
+                        stringXmlBean.setFormatted(formatted);
+                    }
                     list.add(stringXmlBean);
                 }
             }
