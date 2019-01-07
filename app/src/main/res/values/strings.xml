@@ -1,3 +1,7 @@
+<!DOCTYPE resources [
+    <!ENTITY doc_name "二维火掌柜">
+    ]>
 <resources>
     <string name="app_name">DesignPatternDemo</string>
+    <string name="document_type_name">&doc_name;</string>
 </resources>

@@ -3,6 +3,8 @@ apply plugin: 'java'
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile files('libs/algs4.jar')
+    compile files('libs/jxl-2.6.12.jar')
+    compile files('libs/log4j-1.2.14.jar')
 }
 
 sourceCompatibility = "1.7"

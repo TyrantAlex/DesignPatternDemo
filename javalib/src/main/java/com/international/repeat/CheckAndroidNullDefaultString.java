@@ -27,7 +27,7 @@ public class CheckAndroidNullDefaultString {
 
 //    private static final String singlePath = "D:/translateTemp/replace2018.04.27";
 
-    private static final String multiPath = "D:/AndroidStudio/AndroidProject/Checkout3";
+    private static final String multiPath = "/Users/shen/Develop/2dfire/project/checkout_1";
 
     /**
      * 路径打印时候无用的路径部分 如需全路径则置空
@@ -152,6 +152,7 @@ public class CheckAndroidNullDefaultString {
         File baseDir = new File(baseDirName);       // 创建一个File对象
         if (!baseDir.exists() || !baseDir.isDirectory()) {  // 判断目录是否存在
             System.out.println("文件查找失败：" + baseDirName + "不是一个目录！");
+            return;
         }
         String tempName = null;
         //判断目录是否存在
@@ -164,7 +165,7 @@ public class CheckAndroidNullDefaultString {
             } else if (tempFile.isFile()) {
                 //只扫描values文件夹
                 String parent = tempFile.getParent();
-                boolean isBuild = parent.contains("\\build\\");
+                boolean isBuild = parent.contains("/build/");
                 if (isBuild) {
                     continue;
                 }
