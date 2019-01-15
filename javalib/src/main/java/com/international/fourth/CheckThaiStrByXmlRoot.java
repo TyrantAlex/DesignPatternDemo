@@ -2,6 +2,7 @@ package com.international.fourth;
 
 import com.international.listener.SpecialKeyInXmlListener;
 import com.international.repeat.vo.StringXmlBean;
+import com.international.util.InternationalDocUtils;
 import com.international.util.InternationalFileUtils;
 
 import org.w3c.dom.Document;
@@ -10,13 +11,22 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.read.biff.BiffException;
 
 /**
  * 检出项目中泰文文件中的英文字符
@@ -63,6 +73,16 @@ public class CheckThaiStrByXmlRoot {
     private static final String SPECIAL_KEY_START = "dfire_temporary_translation_cannot_delete";
     private static final String SPECIAL_KEY_END = "dfire_temporary_translation_cannot_delete_end";
 
+    /**
+     * 番茄给的总的翻译 文件路径
+     */
+    public static final String ALL_THRANSLATE_PATH = "/Users/shen/Documents/2dfire/international/火掌柜.xls";
+
+    /**
+     * key cn value thai
+     */
+    private Map<String, String> cnThaiMap = new HashMap<>();
+
     public static void main(String[] args) {
         CheckThaiStrByXmlRoot check = new CheckThaiStrByXmlRoot();
         System.out.println("------------------------------------START------------------------------");
@@ -84,10 +104,86 @@ public class CheckThaiStrByXmlRoot {
         List<StringXmlBean> thList = new ArrayList<>();
         thList.addAll(allList);
         allList.clear();
+            //输出中文
+//        compareAndOutPut(cnList, thList);
 
-        compareAndOutPut(cnList, thList);
-//        for (StringXmlBean bean: allList) {
-//            System.out.println("path: " + bean.getFileName() + ", key ：" + bean.getKey() + ", value: " + bean.getValue());
+        //与返回的总文档比较并进行替换
+        compareAndOutPut2(cnList, thList);
+    }
+
+    /**
+     * 比较并输出
+     * @param cnList
+     * @param thList
+     */
+    private void compareAndOutPut2(List<StringXmlBean> cnList, List<StringXmlBean> thList) {
+        List<StringXmlBean> tempList = new ArrayList<>();
+        for (StringXmlBean thBean : thList) {
+            String thkey = thBean.getKey();
+            boolean isUnUse = true;
+            for (StringXmlBean cnBean : cnList) {
+                String cnkey = cnBean.getKey();
+                String cnValue = cnBean.getValue();
+                if (thkey.equals(cnkey)) {
+                    isUnUse = false;
+                    //此时thlist中value变为中文
+                    thBean.setValue(cnValue);
+                    break;
+                }
+            }
+            if (!isUnUse) {
+                tempList.add(thBean);
+            }else {
+                //未匹配上中文，无用字符
+                System.out.println("无用字符 key= " + thBean.getKey() + ", value = " + thBean.getValue() + ", FilePath = " + thBean.getFileName());
+            }
+        }
+
+        /**
+         * 再次比较
+         */
+        //读取总的翻译文档
+        readExcel(ALL_THRANSLATE_PATH, 0, 2);
+        //是否有未匹配上的翻译后文字
+        System.out.println("翻译后未匹配上  ----------------start-------------------");
+        for (StringXmlBean bean : tempList) {
+            String noFormatBeanValue = InternationalDocUtils.myFormatUtil(bean.getValue());
+            boolean isMatch = false;
+            //为空表示全是占位符或者标点
+            if (noFormatBeanValue == null || noFormatBeanValue.isEmpty()) {
+                continue;
+            }
+            for (Map.Entry<String, String> entry : cnThaiMap.entrySet()) {
+                String str = entry.getKey();
+                String noFormatStr = InternationalDocUtils.myFormatUtil(str);
+                if (noFormatStr == null || noFormatStr.isEmpty()) {
+                    continue;
+                }
+                if (noFormatBeanValue.equals(noFormatStr )) {
+                    isMatch = true;
+                    //此时泰文str对应value已经换成翻译后的泰文
+                    bean.setValue(entry.getValue());
+                    break;
+                }
+            }
+            if (!isMatch) {
+                System.out.println(bean.getValue());
+            }
+        }
+        System.out.println("翻译后未匹配上  ----------------end-------------------");
+
+//        for (StringXmlBean bean1 : tempList) {
+//            System.out.println("翻译后的key = " + bean1.getKey() + ", 翻译后的value = " + bean1.getValue() + ", 翻译后的path = " + bean1.getFileName());
+//        }
+
+
+        //输出
+//        List<String> outputlist = new ArrayList<>();
+//
+//        List<StringXmlBean> noRepeatList = deRepeat(tempList);
+//
+//        for (StringXmlBean bean : noRepeatList) {
+//            outputlist.add(bean.getValue());
 //        }
     }
 
@@ -364,4 +460,46 @@ public class CheckThaiStrByXmlRoot {
         return list;
     }
 
+
+    /**
+     * 读取excel指定行列
+     * @param filePath
+     * @param sheetNum
+     */
+    public void readExcel(String filePath, int sheetNum, int columnNum) {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            System.out.println(filePath + "路径下文件不存在");
+            return;
+        }
+        try {
+            // 创建输入流，读取Excel
+            InputStream is = new FileInputStream(file.getAbsolutePath());
+            // jxl提供的Workbook类
+            Workbook wb = Workbook.getWorkbook(is);
+            // Excel的页签数量
+            int sheet_size = wb.getNumberOfSheets();
+            System.out.println("Excel的页签数量 = " + sheet_size);
+            Sheet sheet = wb.getSheet(sheetNum);
+            // sheet.getRows()返回该页的总行数
+            int rows = sheet.getRows();
+            System.out.println("当前页签总行数 = " + rows);
+            // sheet.getColumns()返回该页的总列数
+            int columns = sheet.getColumns();
+            System.out.println("当前页签总列数 = " + columns);
+            for (int i = 0; i < rows; i++) {
+                String cnInfo = sheet.getCell( 0, i).getContents();
+                String thaiInfo = sheet.getCell( columnNum, i).getContents();
+                //放入map
+                cnThaiMap.put(cnInfo, thaiInfo);
+                System.out.println(cnInfo + " == " + thaiInfo);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (BiffException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

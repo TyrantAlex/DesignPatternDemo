@@ -158,7 +158,7 @@ public class InternationalDocUtils {
         //先去掉空格
         String s1 = s.replaceAll(" ", "");
         //再去掉占位符
-        String str1 = s1.replaceAll("(?:%s|%@|%d|%x|%o|%f|%a|%e|%g|%n|%%|%ld|%lu|%zd|%1\\$s|%2\\$s|%3\\$s|%4\\$s|%1d|%2d|%3d|%4d|%.1f|%.2f|%.3f|%.4f|%1s|%2s|%3s|%4s)","HAHA");
+        String str1 = s1.replaceAll("(?:%s|%@|%d|%x|%o|%f|%a|%e|%g|%n|%ld|%lu|%zd|%1\\$s|%2\\$s|%3\\$s|%4\\$s|%1d|%2d|%3d|%4d|%.1f|%.2f|%.3f|%.4f|%1s|%2s|%3s|%4s|%%)","");
         //再去除标点
         String str = str1.replaceAll("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……& amp;*（）——+|{}【】‘；：”“’。，、？|-]", "");
         return str;
